@@ -1,0 +1,6 @@
+{
+    "CarHackingDataset": "PATH",
+    "SaveModelPath": "PATH",
+    "LoadModel": true,
+    "SaveModel": false
+}
