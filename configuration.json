@@ -1,6 +1,6 @@
 {
-    "CarHackingDataset": "PATH",
-    "SaveModelPath": "PATH",
+    "CarHackingDataset": "C:/Users/aless/Desktop/Tesi LM/9) Car-Hacking Dataset",
+    "SaveModelPath": "C:/Users/aless/Documents/GitHub/QBoostBinaryClassification/models",
     "LoadModel": true,
     "SaveModel": false
 }
