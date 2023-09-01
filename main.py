@@ -1,11 +1,12 @@
 import os
 import json
 
-# from dwave.system import DWaveSampler, EmbeddingComposite
+
+from dwave.system import DWaveSampler, EmbeddingComposite
 
 import pickle
 
-from qboost import QBoostClassifier
+from qboost import QBoostClassifier, _build_H, _build_bqm
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -26,6 +27,8 @@ def main():
     configuration_file = json.load(open('configuration.json', 'r'))
     car_hacking_path = configuration_file['CarHackingDataset']
 
+    classifier = []
+
     for file in os.listdir(car_hacking_path):
         if '.csv' in file:
             print(f'Processing Dataset: {file[:-4]}')
@@ -43,8 +46,8 @@ def main():
             x_train = scaler.fit_transform(x_train)
             x_test = scaler.transform(x_test)
 
-            # dwave_sampler = DWaveSampler()
-            # emb_sampler = EmbeddingComposite(dwave_sampler)
+            dwave_sampler = DWaveSampler()
+            emb_sampler = EmbeddingComposite(dwave_sampler)
             lmd = 0.1
 
             load_model = configuration_file['LoadModel']
@@ -71,6 +74,12 @@ def main():
 
             y_pred = qboost.predict_class(x_test)
 
+            H = _build_H(qboost.classifiers, x_test, lmd)
+
+            BQM = _build_bqm(H, y_pred, lmd)
+
+            emb_sampler.sample(BQM)
+
             # Save the models into a specific directory
             if configuration_file['SaveModel']:
                 print('yes')
@@ -78,7 +87,7 @@ def main():
                 model_name = f'{file[:-4]}_qboost.pickle'
 
                 pickle.dump(qboost, open(os.path.join(model_path_to_save, model_name), 'wb'))
-
+                
             accuracy, f1, precision, recall = calculate_matrix(y_test, y_pred)
 
             print(f'Accuracy: {accuracy}')
@@ -88,6 +97,7 @@ def main():
             print()
             print(classification_report(y_test, y_pred))
 
+            classifier.append(qboost)
 
 if __name__ == '__main__':
     main()
