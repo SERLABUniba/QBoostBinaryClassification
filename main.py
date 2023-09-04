@@ -6,6 +6,8 @@ from dwave.system import DWaveSampler, EmbeddingComposite
 
 import pickle
 
+import pandas as pd
+
 from qboost import QBoostClassifier, _build_H, _build_bqm
 
 from sklearn.model_selection import train_test_split
@@ -23,11 +25,19 @@ def calculate_matrix(y_true, y_pred):
 
     return accuracy, f1, precision, recall
 
+
+def reConstructData(predictions, x_test, label):
+    # Convert the np array to dataframe
+    df_predictions = pd.DataFrame(predictions, columns=[label])
+
+    # Concat dataframes horizontally
+    result_data = pd.concat([x_test, df_predictions], axis=1)
+
+    return result_data
+
 def main():
     configuration_file = json.load(open('configuration.json', 'r'))
     car_hacking_path = configuration_file['CarHackingDataset']
-
-    classifier = []
 
     for file in os.listdir(car_hacking_path):
         if '.csv' in file:
@@ -78,7 +88,15 @@ def main():
 
             BQM = _build_bqm(H, y_pred, lmd)
 
-            emb_sampler.sample(BQM)
+            sample_set = emb_sampler.sample(BQM)
+
+            x_test = pd.DataFrame(x_test, columns = X.columns)
+
+            result_data = reConstructData(sample_set, x_test, label)
+
+            print(result_data)
+
+            #result_data.to_csv('SaveModelPath', mode='a', header=False, index=False)
 
             # Save the models into a specific directory
             if configuration_file['SaveModel']:
@@ -97,7 +115,6 @@ def main():
             print()
             print(classification_report(y_test, y_pred))
 
-            classifier.append(qboost)
 
 if __name__ == '__main__':
     main()
