@@ -56,8 +56,8 @@ def main():
             x_train = scaler.fit_transform(x_train)
             x_test = scaler.transform(x_test)
 
-            dwave_sampler = DWaveSampler()
-            emb_sampler = EmbeddingComposite(dwave_sampler)
+            #dwave_sampler = DWaveSampler()
+            #emb_sampler = EmbeddingComposite(dwave_sampler)
             lmd = 0.1
 
             load_model = configuration_file['LoadModel']
@@ -84,19 +84,21 @@ def main():
 
             y_pred = qboost.predict_class(x_test)
 
-            H = _build_H(qboost.classifiers, x_test, lmd)
+            #creation of the matrix of weak classifier predictions
+            #H = _build_H(qboost.classifiers, x_test, lmd)
 
-            BQM = _build_bqm(H, y_pred, lmd)
+            #Creating the Binary Quadratic Model
+            #BQM = _build_bqm(H, y_pred, lmd)
 
-            sample_set = emb_sampler.sample(BQM)
+            #emb_sampler.sample(BQM)
 
             x_test = pd.DataFrame(x_test, columns = X.columns)
 
-            result_data = reConstructData(sample_set, x_test, label)
+            result_data = reConstructData(y_pred, x_test, label)
 
             print(result_data)
 
-            #result_data.to_csv('SaveModelPath', mode='a', header=False, index=False)
+            result_data.to_csv('SaveModelPath', mode='a', header=False, index=False)
 
             # Save the models into a specific directory
             if configuration_file['SaveModel']:
