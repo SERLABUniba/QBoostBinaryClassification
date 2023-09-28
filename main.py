@@ -1,7 +1,10 @@
 import os
 import json
 
-
+#syslog libreries
+import logging
+import logging.handlers
+import json
 from dwave.system import DWaveSampler, EmbeddingComposite
 
 import pickle
@@ -15,7 +18,6 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report
 
 from preprocessing import init_preprocessing
-
 
 def calculate_matrix(y_true, y_pred):
     accuracy = accuracy_score(y_true, y_pred)
@@ -56,8 +58,8 @@ def main():
             x_train = scaler.fit_transform(x_train)
             x_test = scaler.transform(x_test)
 
-            #dwave_sampler = DWaveSampler()
-            #emb_sampler = EmbeddingComposite(dwave_sampler)
+            dwave_sampler = DWaveSampler()
+            emb_sampler = EmbeddingComposite(dwave_sampler)
             lmd = 0.1
 
             load_model = configuration_file['LoadModel']
@@ -98,7 +100,36 @@ def main():
 
             print(result_data)
 
-            result_data.to_csv('SaveModelPath', mode='a', header=False, index=False)
+            '''
+            rows = []
+            for _, row in result_data.iterrows():
+                row['Event Name'] = 'test'
+                row['EventID'] = 'testID'
+                row['Vehicle ID'] = 'TESTs'
+                row['DATA'] = " ".join([str(row[f'D{i}']) for i in range(8)])
+                for i in range(8):
+                    del row[f'D{i}']
+                rows.append(row.to_dict())
+
+            with open(f'{file}_saveModel Path.json', 'w') as f:
+                json.dump(rows , f)
+            '''
+            
+            result_data = result_data.head(5)
+            result_data['ID CAN'] = result_data['CanId']
+            print(result_data['ID CAN'])
+            #result_data['eventName'] = 'TEST NAME'
+            result_data['eventCategory'] = 'flow'
+            result_data['eventID'] = 'send payload'
+            result_data['sourceIP'] = "127.0.0.1"
+            #result_data['DATA CAN'] = result_data.apply(lambda x: " ".join([str(x[f'D{i}']) for i in range(8)]), axis=1)
+            #for i in range(8):
+            #    del result_data[f'D{i}']
+            del result_data['CanId']
+
+            resultJSON = result_data.to_json(f'{file}.json', orient='records', lines=True)
+
+            #result_data.to_csv('SaveModelPath', mode='a', header=False, index=False)
 
             # Save the models into a specific directory
             if configuration_file['SaveModel']:
@@ -116,7 +147,6 @@ def main():
             print(f'recall: {recall}')
             print()
             print(classification_report(y_test, y_pred))
-
 
 if __name__ == '__main__':
     main()
